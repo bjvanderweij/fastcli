@@ -1,6 +1,7 @@
 import inspect
 
-from typing import Callable, Any, Optional, TypeVar, Dict
+from typing import (Callable, Any, Optional, TypeVar, Dict, _GenericAlias,
+        _VariadicGenericAlias, _SpecialForm, Union, get_origin, get_args)
 from pydantic.typing import ForwardRef, evaluate_forwardref
 
 
@@ -34,4 +35,12 @@ def get_arguments(func: Callable[..., Any]):
     signature = get_typed_signature(func)
     return dict(signature.parameters)
     #return {name: param.annotation for name, param in signature.params.items()}
+
+def get_type_description(t: Union[type, _GenericAlias, _VariadicGenericAlias]):
+    if isinstance(t, type):
+        return t.__name__
+    elif isinstance(get_origin(t), type):
+        return f'{get_origin(t)} of {", ".join(map(get_type_description, get_args(t)))}'
+    else:
+        raise Exception()
 

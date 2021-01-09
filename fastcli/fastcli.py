@@ -1,8 +1,9 @@
 import argparse
 import inspect
 
-from utils import get_arguments
-from typing import Callable, Any, Optional, TypeVar
+from utils import get_arguments, get_type_description
+from typing import Callable, Any, Optional, TypeVar, _SpecialForm, get_origin
+from enum import Enum, Flag
 
 # TODO:
 # * Merge the two classes below so you can do sub_cli = cli.add_command(.....), sub_cli.add_command() (kinda like routers)
@@ -57,21 +58,31 @@ class Command(CLI):
         self.func = func
         arguments = get_arguments(func)
         for arg, param in arguments.items():
+            # Default to string when no annotation is provided
+            param_type = str if param.annotation == inspect._empty else param.annotation
             dest = f'--{arg}'
             kwargs = dict(
-                    type=param.annotation,
+                    type=param_type,
                 )
             if param.default is param.empty:
                 dest = arg
-            elif param.annotation == bool and param.default == False:
+            elif param_type == bool and param.default == False:
                 kwargs['action'] = 'store_true'
                 kwargs.pop('type')
             else:
                 kwargs['default'] = param.default
+            if isinstance(param_type, _SpecialForm):
+                raise ValueError('Special forms are not supported.')
+            elif isinstance(param_type, type):
+                type_name = param_type.__name__
+                if issubclass(param_type, Enum):
+                    kwargs['choices'] = list(param_type.__members__.keys())
+            elif isinstance(get_origin(param_type), type):
+                type_name = get_type_description(param_type)
             default_help = ''
             if 'default' in kwargs:
                 default_help = f', default: {kwargs["default"]}'
-            extra_help = f' type: {param.annotation.__name__}{default_help}'
+            extra_help = f' type: {type_name}{default_help}'
             kwargs['help'] = kwargs.get('help', '') +  extra_help
             self.add_argument(dest, **kwargs)
 
