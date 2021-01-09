@@ -1,11 +1,9 @@
 # FastCLI
 
-FastCLI is to argparse what FastAPI is to Starlette.
-
 FastCLI is a minimalist library inspired by FastAPI.
 It allows you to define command line interfaces by writing decorated function signatures.
 
-```
+```python
 #!/bin/bash
 
 from fastcli import CLI
@@ -29,7 +27,7 @@ if __name__ == '__main__':
     cli.parse_args()
 ```
 
-Running with the argument `custom` gives the following result:
+Running with the argument `custom` prints the following usage message:
 
 ```
 usage: tests.py custom [-h] [--z Z] [--flag] x y
@@ -46,6 +44,8 @@ optional arguments:
   --flag      type: bool
 ```
 
-* docstrings are turned into help command descriptions
-* function arguments are converted into command line arguments
-* types and default values are shown in the help texts
+## Features
+
+* Docstrings are turned into help command descriptions
+* Function arguments are converted into command line arguments
+* Types and default values are shown in the help texts
