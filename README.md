@@ -30,7 +30,6 @@ def bar_defition(x: int, y: str, z: str = 'Default', flag: bool = False):
     return x, y, z
 
 if __name__ == '__main__':
-    cli.add_argument(
     cli.add_argument('-v', '--verbosity', type=int, help='Set the verbosity level', choices=[-1, 0, 1], default=0)
     args = cli.parse_args()
     VERBOSITY = args.verbosity
