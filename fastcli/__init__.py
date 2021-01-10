@@ -1,0 +1,1 @@
+from .fastcli import CLI
