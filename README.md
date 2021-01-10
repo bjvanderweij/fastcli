@@ -1,7 +1,7 @@
 # FastCLI
 
 FastCLI is a minimalist library inspired by FastAPI.
-It allows you to define command line interfaces by writing decorated function signatures.
+It allows you to define command line interfaces by writing function signatures with type annotations.
 
 ```python
 #!/bin/bash
