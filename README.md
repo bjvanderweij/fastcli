@@ -9,6 +9,8 @@ It extends argparse and is compatible with much of its functionality.
 
 from fastcli import CLI
 
+VERBOSITY = 0
+
 cli = CLI()
 
 @cli.command()
@@ -30,7 +32,14 @@ def bar_defition(x: int, y: str, z: str = 'Default', flag: bool = False):
     return x, y, z
 
 if __name__ == '__main__':
-    cli.add_argument('-v', '--verbosity', type=int, help='Set the verbosity level', choices=[-1, 0, 1], default=0)
+    cli.add_argument(
+            '-v',
+            '--verbosity',
+            type=int,
+            help='Set the verbosity level',
+            choices=[-1, 0, 1],
+            default=VERBOSITY
+        )
     args = cli.parse_args()
     VERBOSITY = args.verbosity
     cli.execute()
