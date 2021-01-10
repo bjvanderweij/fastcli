@@ -17,6 +17,8 @@ DecoratedCallable = TypeVar("DecoratedCallable", bound=Callable[..., Any])
 
 class CommandParameter:
 
+    _empty = inspect._empty
+
     def __init__(
             self,
             name: str,
@@ -60,7 +62,7 @@ class CommandParameter:
         kwargs['help'] = self._help_text(kwargs)
         return kwargs
 
-    def _help_text(self, kwargs) -> str:
+    def _help_text(self, kwargs) -> str: # TODO: use HelpFormatter instead?
         default_help = ''
         if 'default' in kwargs:
             default_help = f', default: {kwargs["default"]}'
@@ -114,6 +116,13 @@ class CommandParameter:
         #    else:
         #        return [element_types(e) for e in inp]
 
+#class _FunctionSubParsersAction(_SubParsersAction):
+#
+#    def __call__(self, parser, namespace, values, execute=False, option_string=None) -> None:
+#        super().__call__(*args, **kwargs)
+#        parser_name = values[0]
+#        parser = self.name_parser_map[parser_name]
+#        self.namespace._function = parser.
 
 class CLI(ArgumentParser):
 
@@ -130,20 +139,21 @@ class CLI(ArgumentParser):
                 **kwargs
             )
         self.parameters = {}
-        self.subparsers = None
-        self.func = func
-        if self.func is not None:
-            type_hints = get_type_hints(self.func)
-            for name, param in get_function_parameters(self.func).items():
-                # Default to string when no annotation is provided
-                type_ = str if name not in type_hints else type_hints[name]
-                command_param = CommandParameter(name, type_, param.default)
-                self._add_parameter(command_param)
+        self._kwargs = None
+
+    def add_function(self, func):
+        self.set_defaults(_func=func)
+        type_hints = get_type_hints(func)
+        for name, param in get_function_parameters(func).items():
+            # Default to string when no annotation is provided
+            type_ = str if name not in type_hints else type_hints[name]
+            command_param = CommandParameter(name, type_, param.default)
+            self.add_parameter(command_param)
     
-    def _add_parameter(self, parameter: CommandParameter) -> None:
-        #print(parameter.dest, parameter.kwargs)
+    def add_parameter(self, name, type_, default=CommandParameter.empty) -> Action:
+        parameter = CommandParameter(name, type_, default)
         self.parameters[parameter] = parameter
-        self.add_argument(parameter.dest, **parameter.kwargs)
+        return self.add_argument(parameter.dest, **parameter.kwargs)
 
     def parse_known_args(self, args, namespace):
         args, argv = super().parse_known_args(args, namespace)
@@ -153,29 +163,46 @@ class CLI(ArgumentParser):
             if get_origin(param.type_) is tuple:
                 setattr(args, param.name, get_origin(param.type_)(getattr(args, param.name)))
             # TODO: convert and validate tuple sub-types?
-        if self.func is not None:
-            self.func(**vars(args))
+            # TODO: no, do this in _check value and maintain a counter....
         return args, argv
+
+    def add_function_parsers(parser_class=CLI, **kwargs):
+        return self.add_subparsers(parser_class=parser_class, **kwargs)
 
     def add_command(
             self,
             func: Callable[..., Any], 
-            name: str = None,
-        ) -> None:
-        if self.subparsers is None:
-            self.subparsers = self.add_subparsers(parser_class=CLI)
+            name: Optional[str] = None,
+            aliases: Iterable = (),
+            description: Optional[str] = None,
+            **kwargs
+        ) -> ArgumentParser:
+        if self._subparsers is None:
+            self.subparsers = self.add_function_parsers()
         name = name or func.__name__
-        return self.subparsers.add_parser(name, func=func)
+        parser = self.subparsers.add_parser(name, aliases=aliases, description=description)
+        parser.add_function(func)
+        return parser
 
     def command(
                 self,
-                name: str = None
+                name: str = None,
+                aliases: Iterable = (),
+                description: str = None
             ) -> Callable[[DecoratedCallable], DecoratedCallable]:
-        def decorator(func: DecoratedCallable) -> DecoratedCallable:
+        def decorator(func: Callable[..., Any]) -> DecoratedCallable:
             self.add_command(
                     func,
                     name=name,
+                    description=description,
+                    aliases=aliases
                 )
             return func
         return decorator
+
+    def execute(self):
+        ns = self.parse_args()
+        kwargs = vars(ns)
+        f = kwargs.pop('_func')
+        return f(**kwargs)
 
