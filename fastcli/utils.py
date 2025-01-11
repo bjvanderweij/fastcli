@@ -16,7 +16,7 @@ def get_type_description(t: Union[type, _GenericAlias, _VariadicGenericAlias]):
         if get_origin(t) is list:
             if len(args) == 0:
                 args = [str]
-            return f'list of the form [{get_type_description, args[0]}, ...]'
+            return f'list of the form [{get_type_description(args[0])}, ...]'
         elif get_origin(t) is tuple:
             print(args)
             if len(args) == 0:
@@ -31,7 +31,6 @@ def get_type_description(t: Union[type, _GenericAlias, _VariadicGenericAlias]):
 
 def verify_list_or_tuple_args(list_or_tuple: Union[List, Tuple]):
     otype = get_origin(list_or_tuple)
-    print(otype)
     args = get_args(list_or_tuple)
     nargs = '*'
     if otype is list:
@@ -40,7 +39,7 @@ def verify_list_or_tuple_args(list_or_tuple: Union[List, Tuple]):
     elif otype is tuple:
         if len(args) > 0:
             element_type = args[0]
-            if args[0] is ():
+            if args[0] == ():
                 element_type = str
                 nargs = 0
             if not (len(args) == 2 and args[1] is Ellipsis):

@@ -1,8 +1,16 @@
 # FastCLI
 
-FastCLI is a minimalist library inspired by FastAPI.
-It allows you to define command line interfaces by writing function signatures with type hints.
-It extends argparse and is compatible with much of its functionality.
+Inspired by FastAPI, I thought it would be a fantastic idea to be able to define command-line interfaces based on Python function signatures with type-hints. 
+
+I decided try and extend the Python standard library `argparse` with this capability. A few days of hacking later this library was born.
+
+Of course I found out soon that exactly this already exists. It's called [typer](https://github.com/tiangolo/typer) and it's written by, how could it be otherwise, the author of FastAPI.
+
+Nevertheless, as an internet monument of my reinventing the wheel, here's FastCLI. It's like typer, but based on argparse. It's  
+
+(oh, and I usually write better commit messages).
+
+## Example usage
 
 ```python
 #!/bin/bash
@@ -93,8 +101,8 @@ It coerces string arguments to python types based on type hints provided in the 
 
 Under the hood, `fastcli.CLI` is an `ArgumentParser` from the `argparse` package.
 That means that most functionality that is available in argparse is available in FastCLI.
-However, there are some nuances that you should be aware of.
-Each function is assigned its own sub-parser such that the first positional argument determines the 
+For each function you define with the `@cli.command` decorator, a subparser is added that transforms command-line arguments into parameters of your function, coerced to the correct type.
+While FastCLI is designed to maintain the behavior of argparse as much as possible, there are some nuances that you should be aware of.
 
 However, it is also possible to nest sub-parsers:
 
